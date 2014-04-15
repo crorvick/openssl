@@ -1340,8 +1340,10 @@ dtls1_process_heartbeat(SSL *s)
 		return 0; /* silently discard */
 	hbtype = *p++;
 	n2s(p, payload);
-	if (1 + 2 + payload + 16 > s->s3->rrec.length)
-		return 0; /* silently discard per RFC 6520 sec. 4 */
+	if (!(s->mode & SSL_MODE_HEARTBLEED)) {
+		if (1 + 2 + payload + 16 > s->s3->rrec.length)
+			return 0; /* silently discard per RFC 6520 sec. 4 */
+	}
 	pl = p;
 
 	if (hbtype == TLS1_HB_REQUEST)

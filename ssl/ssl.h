@@ -765,6 +765,11 @@ struct ssl_session_st
  */
 #define SSL_MODE_SEND_CLIENTHELLO_TIME 0x00000020L
 #define SSL_MODE_SEND_SERVERHELLO_TIME 0x00000040L
+/* Disable validation of the payload length field for received heart-
+ * beats.  This effectively enables the Heartbleed bug (for educational
+ * purposes only.)
+ */
+#define SSL_MODE_HEARTBLEED 0x00010000L
 
 /* Cert related flags */
 /* Many implementations ignore some aspects of the TLS standards such as
