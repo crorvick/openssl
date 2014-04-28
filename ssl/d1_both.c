@@ -1405,6 +1405,75 @@ dtls1_process_heartbeat(SSL *s)
 	}
 
 int
+dtls1_heartbeatex(SSL *s,
+		const unsigned char *payload,
+		unsigned int payload_buf_len,
+		unsigned int payload_snd_len,
+		const unsigned char *padding,
+		unsigned int padding_len)
+	{
+	unsigned char *buf, *p;
+	int ret;
+
+	if (payload_snd_len > 0xffffu)
+		payload_snd_len = 0xffffu;
+
+	/* Only send if peer supports and accepts HB requests... */
+	if (!(s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED) ||
+	    s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_SEND_REQUESTS)
+		{
+		SSLerr(SSL_F_DTLS1_HEARTBEAT,SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT);
+		return -1;
+		}
+
+	/* ...and there is none in flight yet... */
+	if (s->tlsext_hb_pending)
+		{
+		SSLerr(SSL_F_DTLS1_HEARTBEAT,SSL_R_TLS_HEARTBEAT_PENDING);
+		return -1;
+		}
+
+	/* ...and no handshake in progress. */
+	if (SSL_in_init(s) || s->in_handshake)
+		{
+		SSLerr(SSL_F_DTLS1_HEARTBEAT,SSL_R_UNEXPECTED_MESSAGE);
+		return -1;
+		}
+
+	/* Check if padding is too long, payload and padding
+	 * must not exceed 2^14 - 3 = 16381 bytes in total.
+	 */
+	OPENSSL_assert(payload_buf_len + padding_len <= 16381);
+
+	buf = OPENSSL_malloc(1 + 2 + payload_buf_len + padding_len);
+	p = buf;
+	*p++ = TLS1_HB_REQUEST;
+	s2n(payload_snd_len, p);
+	if (payload_buf_len > 0) {
+		memcpy(p, payload, payload_buf_len);
+		p += payload_buf_len;
+	}
+	if (padding_len > 0)
+		memcpy(p, padding, padding_len);
+
+	ret = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buf, 3 + payload_buf_len + padding_len);
+	if (ret >= 0)
+		{
+		if (s->msg_callback)
+			s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
+				buf, 3 + payload_buf_len + padding_len,
+				s, s->msg_callback_arg);
+
+		dtls1_start_timer(s);
+		s->tlsext_hb_pending = 1;
+		}
+
+	OPENSSL_free(buf);
+
+	return ret;
+	}
+
+int
 dtls1_heartbeat(SSL *s)
 	{
 	unsigned char *buf, *p;
