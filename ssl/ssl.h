@@ -870,6 +870,8 @@ struct ssl_session_st
 #ifndef OPENSSL_NO_HEARTBEATS
 #define SSL_heartbeat(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_TLS_EXT_SEND_HEARTBEAT,0,NULL)
+#define SSL_heartbleed(ssl, len) \
+        SSL_ctrl((ssl),SSL_CTRL_TLS_EXT_SEND_HEARTBLEED,len,NULL)
 #endif
 
 #define SSL_CTX_set_cert_flags(ctx,op) \
@@ -1915,6 +1917,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT				85
 #define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING		86
 #define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS	87
+#define SSL_CTRL_TLS_EXT_SEND_HEARTBLEED			666
 #endif
 #endif /* OPENSSL_NO_TLSEXT */
 

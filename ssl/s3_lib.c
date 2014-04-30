@@ -3404,6 +3404,13 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			ret = tls1_heartbeat(s);
 		break;
 
+	case SSL_CTRL_TLS_EXT_SEND_HEARTBLEED:
+		if (SSL_IS_DTLS(s))
+			ret = dtls1_heartbeatex(s, NULL, 0, larg, "Jingle bells, Batman smells", 16);
+		else
+			ret = tls1_heartbeatex(s, NULL, 0, larg, "Robin laid an egg", 16);
+		break;
+
 	case SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING:
 		ret = s->tlsext_hb_pending;
 		break;
